@@ -21,9 +21,11 @@ import okhttp3.Callback;
 import okhttp3.OkHttpClient;
 import okhttp3.Request;
 import okhttp3.Response;
+import retrofit2.Retrofit;
+import retrofit2.converter.gson.GsonConverterFactory;
 
 public class MainActivity extends AppCompatActivity {
-    private Button btnGet, btnJson;
+    private Button btnGet, btnJson, btnRetrofit;
     private TextView tvResult;
 
     //private ExecutorService executor = Executors.newSingleThreadExecutor();
@@ -44,12 +46,21 @@ public class MainActivity extends AppCompatActivity {
                     "    }\n" +
                     "]";
 
+    private Retrofit retrofit;
+
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_main);
 
         findUId();
+
+        retrofit = new Retrofit.Builder()
+                .baseUrl("https://true-music-142601.appspot.com/")
+                .addConverterFactory(GsonConverterFactory.create())
+                .build();
+
+        final GaeApi repo = retrofit.create(GaeApi.class);
 
         btnJson.setOnClickListener(new View.OnClickListener() {
             @Override
@@ -113,11 +124,42 @@ public class MainActivity extends AppCompatActivity {
             }
         });
 
+        btnRetrofit.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View view) {
+                retrofit2.Call<List<TodayMovie>> call = repo.getMovieList("westmovie");
+                call.enqueue(new retrofit2.Callback<List<TodayMovie>>() {
+                    @Override
+                    public void onResponse(retrofit2.Call<List<TodayMovie>> call, retrofit2.Response<List<TodayMovie>> response) {
+                        List<TodayMovie> movieList = response.body();
+                        final StringBuffer sb = new StringBuffer();
+
+                        for(TodayMovie obj : movieList) {
+                            sb.append("channel:");
+                            sb.append(obj.getChannel()+"\n");
+
+                            for(TodayMovie.ScheduleBean innerObj: obj.getSchedule()){
+                                sb.append(innerObj.getName()+" "+innerObj.getTime()+"\n");
+                            }
+                        }
+
+                        tvResult.setText(sb.toString());
+                    }
+
+                    @Override
+                    public void onFailure(retrofit2.Call<List<TodayMovie>> call, Throwable t) {
+
+                    }
+                });
+            }
+        });
+
     }
 
     private void findUId() {
         btnGet = (Button) findViewById(R.id.btnGet);
         btnJson = (Button) findViewById(R.id.btnJson);
         tvResult = (TextView) findViewById(R.id.tvResult);
+        btnRetrofit = (Button) findViewById(R.id.btnRetrofit);
     }
 }
