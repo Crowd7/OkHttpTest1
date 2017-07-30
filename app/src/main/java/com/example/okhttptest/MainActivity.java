@@ -2,6 +2,7 @@ package com.example.okhttptest;
 
 import android.support.v7.app.AppCompatActivity;
 import android.os.Bundle;
+import android.util.Log;
 import android.view.View;
 import android.widget.Button;
 import android.widget.TextView;
@@ -9,13 +10,24 @@ import android.widget.TextView;
 import com.google.gson.Gson;
 import com.google.gson.reflect.TypeToken;
 
+import org.reactivestreams.Subscriber;
+
 import java.io.IOException;
 import java.lang.reflect.Type;
 import java.util.ArrayList;
 import java.util.List;
-import java.util.concurrent.ExecutorService;
-import java.util.concurrent.Executors;
 
+import io.reactivex.Flowable;
+import io.reactivex.Observable;
+import io.reactivex.ObservableEmitter;
+import io.reactivex.ObservableOnSubscribe;
+import io.reactivex.Observer;
+import io.reactivex.android.schedulers.AndroidSchedulers;
+import io.reactivex.annotations.NonNull;
+import io.reactivex.disposables.Disposable;
+import io.reactivex.functions.Consumer;
+import io.reactivex.functions.Function;
+import io.reactivex.schedulers.Schedulers;
 import okhttp3.Call;
 import okhttp3.Callback;
 import okhttp3.OkHttpClient;
@@ -25,7 +37,7 @@ import retrofit2.Retrofit;
 import retrofit2.converter.gson.GsonConverterFactory;
 
 public class MainActivity extends AppCompatActivity {
-    private Button btnGet, btnJson, btnRetrofit;
+    private Button btnGet, btnJson, btnRetrofit, btnRx;
     private TextView tvResult;
 
     //private ExecutorService executor = Executors.newSingleThreadExecutor();
@@ -127,6 +139,7 @@ public class MainActivity extends AppCompatActivity {
         btnRetrofit.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View view) {
+                //call對象只能被執行一次
                 retrofit2.Call<List<TodayMovie>> call = repo.getMovieList("westmovie");
                 call.enqueue(new retrofit2.Callback<List<TodayMovie>>() {
                     @Override
@@ -154,6 +167,62 @@ public class MainActivity extends AppCompatActivity {
             }
         });
 
+        final Observable observable = Observable.create(new ObservableOnSubscribe() {
+            @Override
+            public void subscribe(@NonNull ObservableEmitter e) throws Exception {
+                Log.d("android", "Observable subscribe");
+                e.onNext("Hello");
+                e.onComplete();
+            }
+        });
+
+        final Observer<String> observer = new Observer<String>() {
+            @Override
+            public void onSubscribe(@NonNull Disposable d) {
+                Log.d("android", "observer onSubscribe()");
+            }
+
+            @Override
+            public void onNext(@NonNull String s) {
+                Log.d("android", "observer onNext()");
+            }
+
+            @Override
+            public void onError(@NonNull Throwable e) {
+
+            }
+
+            @Override
+            public void onComplete() {
+                Log.d("android", "observer onComplete()");
+            }
+        };
+        btnRx.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View view) {
+                //observable.subscribe(observer);
+
+                Flowable.just(1,2,3,4,5,6,1)
+                        .subscribeOn(Schedulers.newThread())
+                        .map(new Function<Integer, String>(){
+                            @Override
+                            public String apply(@NonNull Integer integer) throws Exception {
+                                if(integer==1){
+                                    return "match";
+                                }else
+                                    return "not match";
+                            }
+                        })
+                        .observeOn(AndroidSchedulers.mainThread())
+                        .subscribe(new Consumer<String>() {
+                            @Override
+                            public void accept(String s) throws Exception {
+                                Log.d("android", "msg= "+s+", thread= "+Thread.currentThread().getName());
+                            }
+                        });
+            }
+        });
+
     }
 
     private void findUId() {
@@ -161,5 +230,6 @@ public class MainActivity extends AppCompatActivity {
         btnJson = (Button) findViewById(R.id.btnJson);
         tvResult = (TextView) findViewById(R.id.tvResult);
         btnRetrofit = (Button) findViewById(R.id.btnRetrofit);
+        btnRx = (Button) findViewById(R.id.btnRx);
     }
 }
