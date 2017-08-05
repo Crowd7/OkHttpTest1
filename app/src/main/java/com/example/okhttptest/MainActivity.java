@@ -1,8 +1,11 @@
 package com.example.okhttptest;
 
+import android.content.Intent;
 import android.support.v7.app.AppCompatActivity;
 import android.os.Bundle;
 import android.util.Log;
+import android.view.Menu;
+import android.view.MenuItem;
 import android.view.View;
 import android.widget.Button;
 import android.widget.TextView;
@@ -220,6 +223,15 @@ public class MainActivity extends AppCompatActivity {
                                 Log.d("android", "msg= "+s+", thread= "+Thread.currentThread().getName());
                             }
                         });
+
+
+                Observable.fromArray("one","two","three")
+                        .subscribe(new Consumer<String>() {
+                            @Override
+                            public void accept(String s) throws Exception {
+
+                            }
+                        });
             }
         });
 
@@ -231,5 +243,23 @@ public class MainActivity extends AppCompatActivity {
         tvResult = (TextView) findViewById(R.id.tvResult);
         btnRetrofit = (Button) findViewById(R.id.btnRetrofit);
         btnRx = (Button) findViewById(R.id.btnRx);
+    }
+
+    @Override
+    public boolean onCreateOptionsMenu(Menu menu) {
+        getMenuInflater().inflate(R.menu.menu_main, menu);
+        return true;
+    }
+
+    @Override
+    public boolean onOptionsItemSelected(MenuItem item) {
+        switch (item.getItemId()){
+            case R.id.newActivity:
+                startActivity(new Intent(this, RandomActivity.class));
+                return true;
+            default:
+                return super.onOptionsItemSelected(item);
+        }
+
     }
 }
