@@ -30,6 +30,7 @@ import io.reactivex.annotations.NonNull;
 import io.reactivex.disposables.Disposable;
 import io.reactivex.functions.Consumer;
 import io.reactivex.functions.Function;
+import io.reactivex.functions.Predicate;
 import io.reactivex.schedulers.Schedulers;
 import okhttp3.Call;
 import okhttp3.Callback;
@@ -214,6 +215,15 @@ public class MainActivity extends AppCompatActivity {
                                     return "match";
                                 }else
                                     return "not match";
+                            }
+                        })
+                        .filter(new Predicate<String>() {
+                            @Override
+                            public boolean test(@NonNull String s) throws Exception {
+                                if(s.equals("match"))
+                                    return true;
+                                else
+                                    return false;
                             }
                         })
                         .observeOn(AndroidSchedulers.mainThread())
